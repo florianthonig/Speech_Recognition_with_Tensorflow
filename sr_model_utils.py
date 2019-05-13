@@ -1,6 +1,14 @@
 import numpy as np
 import tensorflow as tf
 
+def count(iter):
+    """ counts the elements in a generator
+    """
+    try:
+        return len(iter)
+    except TypeError:
+        return sum(1 for _ in iter)
+
 def minibatches(inputs, targets=None, minibatch_size=64):
     """batch generator. yields x and y batch.
     """
@@ -13,6 +21,8 @@ def minibatches(inputs, targets=None, minibatch_size=64):
                 x_batch, y_batch = [], []
             x_batch.append(inp)
             y_batch.append(tgt)
+            if len(x_batch) > minibatch_size or len(y_batch) > minibatch_size:
+                raise Exception('minibatch size overflow!')
 
         if len(x_batch) != 0:
             for inp, tgt in zip(inputs, targets):
@@ -28,6 +38,8 @@ def minibatches(inputs, targets=None, minibatch_size=64):
                 yield x_batch
                 x_batch = []
             x_batch.append(inp)
+            if len(x_batch) > minibatch_size:
+                raise Exception('minibatch size overflow!')
 
         if len(x_batch) != 0:
             for inp in inputs:

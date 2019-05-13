@@ -418,7 +418,7 @@ class SpeechRecognizer:
                 # Dynamic decoding
                 outputs, final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
                     my_decoder,
-                    maximum_iterations=maximum_iterations,
+                    maximum_iterations=100,
                     output_time_major=False,
                     impute_finished=False,
                     swap_memory=False,
@@ -508,7 +508,7 @@ class SpeechRecognizer:
             self.add_summary()
 
         self.initialize_session()
-        if restore_path is not None:
+        if restore_path is not None and os.path.exists(restore_path):
             self.restore_session(restore_path)
 
         best_score = np.inf
@@ -559,30 +559,35 @@ class SpeechRecognizer:
         prediction_ids = []
 
         if targets is not None:
-
+            batch_count = 0
             for (inps, trgts) in sr_model_utils.minibatches(inputs,
                                                             targets=targets,
                                                             minibatch_size=self.batch_size):
                 feed, _, char_sequence_lengths = self.get_feed_dict(inps,
                                                                     trgts=trgts)
-
+                
+                print('Processing batch %i' % batch_count)
                 s_ids = self.sess.run([self.sample_words],
                                       feed_dict=feed)
 
-
                 for s in s_ids:
                     prediction_ids.append(s)
+                
+                batch_count = batch_count + 1
 
         else:
-
+            batch_count = 0
             for inps in sr_model_utils.minibatches(inputs,
                                                    targets=None,
                                                    minibatch_size=self.batch_size):
                 feed, _ = self.get_feed_dict(inps)
+                print('Processing batch %i' % batch_count)
                 s_ids = self.sess.run([self.sample_words],
                                       feed_dict=feed)
                 for s in s_ids:
                     prediction_ids.append(s)
+                
+                batch_count = batch_count + 1
 
         return prediction_ids
 
